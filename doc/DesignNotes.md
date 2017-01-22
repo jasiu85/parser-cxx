@@ -129,6 +129,7 @@ ambiguity in them. A biased combinator can be used to fix this:
 #### Monadic bind
 
 Monads exist at multiple levels here:
+
 1. CPS is used to control backtracking.
 1. Reader monad could be used to manage input, but in C++ in-place modifications
    probably work better.
