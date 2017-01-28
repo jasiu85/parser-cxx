@@ -135,16 +135,30 @@ Monads exist at multiple levels here:
    probably work better.
 1. Monading sequencing.
 
-The last point is not yet covered. The existing sequencing combinator is
-`applicative`, i.e. the behavior of the 2nd parser does not depend on result
-from the 1st one. This should not be needed for CFG languages, or PEG parsing.
-But it will be provided nevertheless, so that the suite of combinators is
-complete.
+The last point is not covered. It is not needed for context-free languages, for
+which the simpler applicative approach is sufficient.
 
-    ParseSequenceBind(Parser<T1> p1, std::function<Parser<T2>(T1)> p2) = [p1, p2] (ParseInput input, ParseOutput<T2> output) {
-      p1(input, [p2, output](T1 t1) {
-        p2(t1)(input, [output](T2 t2) {
-          output(t2);
-        }
-      }
-    }
+### Ownership
+
+#### Parsers
+
+Parsers may reference each other in a circular way. This is unavoidable when
+parsing expressions that are recursively defined. For that reason parsers will
+reference one another in a non-owning way. They should all be owned by a parent
+_Grammar_ object. 
+
+#### Parse input
+
+The input should be non-copyable, and shared between parsers. So it should be
+passed by reference. But certain parses might have to rollback to a previous
+state. This is most easily achieved by making a copy of the input. This will
+be achieved by introducing a _Copy_ method, instead of copy constructor. This
+way some additional book-keeping can be done too. This copying operation should
+not result in copying of the underlying raw string data. So the input object
+will be a wrapper around underlying buffer with shared ownership semantics.
+
+#### Parse output
+
+Objects produced as parse results shouldn't be copied. ParseOutput should accept
+them by value, and std::move should be used so that parsers are compatible with
+move-only semantics.
